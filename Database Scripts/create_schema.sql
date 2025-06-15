@@ -1,99 +1,94 @@
-create database simplyfly;
-use simplyfly;
+/* start fresh */
+DROP DATABASE IF EXISTS simplyfly;
+CREATE DATABASE simplyfly;
+USE simplyfly;
 
---  users table 
-create table users (
-    user_id int primary key auto_increment,
-    name varchar(100) not null,
-    email varchar(100) unique not null,
-    password_hash varchar(255) not null,
-    gender varchar(20),
-    contact_number varchar(15),
-    address text,
-    role enum('passenger', 'flight_owner', 'admin') not null,
-    created_at datetime default current_timestamp
+/* 1. users */
+CREATE TABLE users (
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    gender VARCHAR(20),
+    contact_number VARCHAR(15),
+    address TEXT,
+    role ENUM('PASSENGER','FLIGHT_OWNER','ADMIN') NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
---  routes table
-create table routes (
-    route_id int primary key auto_increment,
-    origin varchar(100) not null unique,
-    destination varchar(100) not null unique,
-    duration time
+/* 2. flights  (aircraft + commercial number) */
+CREATE TABLE flights (
+    flight_id INT AUTO_INCREMENT PRIMARY KEY,
+    owner_id  INT NOT NULL,
+    flight_number VARCHAR(20) NOT NULL UNIQUE,
+    flight_name   VARCHAR(100),
+    total_seats   INT NOT NULL,
+    checkin_kg INT DEFAULT 15,
+    cabin_kg   INT DEFAULT 7,
+    FOREIGN KEY (owner_id) REFERENCES users(user_id)
 );
 
---  flights table
-create table flights (
-    flight_id int primary key auto_increment,
-    flight_name varchar(100) not null,
-    flight_number varchar(20) unique not null,
-    route_id int not null,
-    departure_time datetime,
-    arrival_time datetime,
-    total_seats int not null,
-    fare_per_seat decimal(10, 2) not null,
-    owner_id int not null,
-    foreign key (route_id) references routes(route_id),
-    foreign key (owner_id) references users(user_id)
+/* 3. routes  (one dated service of a flight) */
+CREATE TABLE routes (
+    route_id INT AUTO_INCREMENT PRIMARY KEY,
+    flight_id INT NOT NULL,
+    origin VARCHAR(100) NOT NULL,
+    destination VARCHAR(100) NOT NULL,
+    departure_ts DATETIME NOT NULL,
+    arrival_ts   DATETIME NOT NULL,
+    fare_per_seat DECIMAL(10,2) NOT NULL,
+    FOREIGN KEY (flight_id) REFERENCES flights(flight_id)
 );
 
---  baggage_info table
-create table baggage_info (
-    baggage_id int primary key auto_increment,
-    flight_id int,
-    checkin_weight_per_adult_kg int,
-    cabin_weight_per_adult_kg int,
-    foreign key (flight_id) references flights(flight_id)
+/* 4. seats  (inventory per route) */
+CREATE TABLE seats (
+    seat_id INT AUTO_INCREMENT PRIMARY KEY,
+    route_id INT NOT NULL,
+    seat_number VARCHAR(10) NOT NULL,
+    class ENUM('ECONOMY','BUSINESS') DEFAULT 'ECONOMY',
+    status ENUM('AVAILABLE','BOOKED') DEFAULT 'AVAILABLE',
+    FOREIGN KEY (route_id) REFERENCES routes(route_id),
+    UNIQUE(route_id, seat_number)           -- seat 1A can repeat on a different route
 );
 
--- seats table
-create table seats (
-    seat_id int primary key auto_increment,
-    flight_id int,
-    seat_number varchar(10) unique,
-    is_booked boolean default false,
-    class enum('economy', 'business'),
-    foreign key (flight_id) references flights(flight_id)
+/* 5. bookings  (one order by a passenger) */
+CREATE TABLE bookings (
+    booking_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id  INT NOT NULL,
+    route_id INT NOT NULL,
+    total_amount DECIMAL(10,2) NOT NULL,
+    status ENUM('BOOKED','CANCELLED') DEFAULT 'BOOKED',
+    booked_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id)  REFERENCES users(user_id),
+    FOREIGN KEY (route_id) REFERENCES routes(route_id)
 );
 
---  bookings table
-create table bookings (
-    booking_id int primary key auto_increment,
-    user_id int,
-    flight_id int,
-    total_amount decimal(10, 2),
-    status enum('booked', 'cancelled'),
-    booking_date datetime default current_timestamp,
-    foreign key (user_id) references users(user_id),
-    foreign key (flight_id) references flights(flight_id)
+/* 6. booking_seats  (which seats are in the booking) */
+CREATE TABLE booking_seats (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    booking_id INT NOT NULL,
+    seat_id    INT NOT NULL,
+    FOREIGN KEY (booking_id) REFERENCES bookings(booking_id),
+    FOREIGN KEY (seat_id)    REFERENCES seats(seat_id),
+    UNIQUE(booking_id, seat_id)             -- avoid duplicate seat rows
 );
 
--- booking_seats table
-create table booking_seats (
-    id int primary key auto_increment,
-    booking_id int,
-    seat_id int,
-    foreign key (booking_id) references bookings(booking_id),
-    foreign key (seat_id) references seats(seat_id)
+/* 7. payments */
+CREATE TABLE payments (
+    payment_id INT AUTO_INCREMENT PRIMARY KEY,
+    booking_id INT NOT NULL,
+    payment_method ENUM('UPI','CARD','NETBANKING') NOT NULL,
+    amount_paid DECIMAL(10,2) NOT NULL,
+    payment_status ENUM('FAILED','PAID','PENDING') DEFAULT 'PENDING',
+    payment_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (booking_id) REFERENCES bookings(booking_id)
 );
 
---  payments table
-create table payments (
-    payment_id int primary key auto_increment,
-    booking_id int,
-    payment_method enum('upi', 'card', 'netbanking'),
-    amount_paid decimal(10, 2),
-    payment_status enum('failed', 'paid', 'pending'),
-    payment_date datetime default current_timestamp,
-    foreign key (booking_id) references bookings(booking_id)
+/* 8. booking_history  (audit trail) */
+CREATE TABLE booking_history (
+    history_id INT AUTO_INCREMENT PRIMARY KEY,
+    booking_id INT NOT NULL,
+    action ENUM('BOOKED','CANCELLED') NOT NULL,
+    action_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (booking_id) REFERENCES bookings(booking_id)
 );
-
--- . booking_history table
-create table booking_history (
-    history_id int primary key auto_increment,
-    booking_id int,
-    action  enum('booked', 'cancelled') not null,
-    action_date datetime default current_timestamp,
-    foreign key (booking_id) references bookings(booking_id)
-);
-
