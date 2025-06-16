@@ -1,12 +1,70 @@
 package com.example.simplyfly.entity;
 
 import com.example.simplyfly.enums.Role;
+import com.example.simplyfly.repository.FlightRepo;
+import com.example.simplyfly.repository.UserRepo;
+
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.List;
+import java.util.Optional;
+@SpringBootTest
 class FlightPojoTest {
+    @Autowired
+    private FlightRepo flightRepo;
 
+    @Autowired
+    private UserRepo userRepo;
+
+    @Test
+    void testSave() {
+        // Prepare owner
+        User owner = new User();
+        owner.setUserID(1);
+        owner.setName("Owner");
+        userRepo.save(owner);
+
+        // Create and save Flight
+        Flight f = new Flight(10, owner, "SF101", "Express", 180, 15, 7);
+        Flight saved = flightRepo.save(f);
+
+        assertNotNull(saved, "Saved flight should not be null");
+        assertEquals(10, saved.getFlightId());
+        assertEquals("SF101", saved.getFlightNumber());
+        assertEquals("Express", saved.getFlightName());
+        assertEquals(180, saved.getTotalSeats());
+        assertEquals(15, saved.getCheckinKg());
+        assertEquals(7, saved.getCabinKg());
+    }
+
+    @Test
+    void testFindById() {
+        // Prepare owner
+        User owner = new User(); owner.setUserID(2); owner.setName("Owner2"); userRepo.save(owner);
+
+        Flight f = new Flight(20, owner, "SF202", "Max", 150, 20, 8);
+        flightRepo.save(f);
+
+        Optional<Flight> opt = flightRepo.findById(20);
+        assertTrue(opt.isPresent(), "Flight should be found by ID");
+        assertEquals("SF202", opt.get().getFlightNumber());
+    }
+
+
+    @Test
+    void testDeleteById() {
+        User owner = new User(); owner.setUserID(5); owner.setName("O5"); userRepo.save(owner);
+
+        Flight f = new Flight(40, owner, "SF505", "Prime", 160, 18, 9);
+        flightRepo.save(f);
+
+        flightRepo.deleteById(40);
+        assertFalse(flightRepo.findById(40).isPresent(), "Flight should be deleted");
+    }
     @Test
     void testSettersAndGetters() {
         User owner = new User();

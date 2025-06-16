@@ -1,5 +1,5 @@
 package com.example.simplyfly.service;
 
-public class RouteSearchService {
-
+public class RouteSearchService  {
+		
 }
