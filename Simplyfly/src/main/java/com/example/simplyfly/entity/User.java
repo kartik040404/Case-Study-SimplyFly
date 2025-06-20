@@ -4,15 +4,20 @@ import java.time.LocalDateTime;
 
 import com.example.simplyfly.enums.Role;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 @Entity
 public class User {
 	@Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int userID;
 	private String name;
 	private String email;
-	private String passwordHash;
+	private String password;
 	private String gender;
 	private String contactNumber;
 	private String address;
@@ -25,13 +30,13 @@ public class User {
 	}
 
 
-	public User(int userID, String name, String email, String passwordHash, String gender, String contactNumber,
+	public User(int userID, String name, String email, String password, String gender, String contactNumber,
 			String address, Role role, LocalDateTime createdAt) {
 		super();
 		this.userID = userID;
 		this.name = name;
 		this.email = email;
-		this.passwordHash = passwordHash;
+		this.password = password;
 		this.gender = gender;
 		this.contactNumber = contactNumber;
 		this.address = address;
@@ -70,13 +75,13 @@ public class User {
 	}
 
 
-	public String getPasswordHash() {
-		return passwordHash;
+	public String getPassword() {
+		return password;
 	}
 
 
-	public void setPasswordHash(String passwordHash) {
-		this.passwordHash = passwordHash;
+	public void setPassword(String password) {
+		this.password = password;
 	}
 
 
@@ -132,7 +137,7 @@ public class User {
 
 	@Override
 	public String toString() {
-		return "User [userID=" + userID + ", name=" + name + ", email=" + email + ", passwordHash=" + passwordHash
+		return "User [userID=" + userID + ", name=" + name + ", email=" + email + ", passwordHash=" + password
 				+ ", gender=" + gender + ", contactNumber=" + contactNumber + ", address=" + address + ", role=" + role
 				+ ", createdAt=" + createdAt + "]";
 	}

@@ -14,11 +14,11 @@ public class RouteController {
     @Autowired
     private RouteRepo routeRepo;
 
-    @GetMapping("/")
-    public String listRoutes(Model model) {
-        model.addAttribute("routes", routeRepo.findAll());
-        return "routes.jsp";                  
-    }
+//    @GetMapping("/")
+//    public String listRoutes(Model model) {
+//        model.addAttribute("routes", routeRepo.findAll());
+//        return "routes.jsp";                  
+//    }
 
     @GetMapping("/addRouteForm")
     public String addRouteForm() {
