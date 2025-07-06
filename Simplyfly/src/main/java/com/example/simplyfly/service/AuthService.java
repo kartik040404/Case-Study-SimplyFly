@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -71,8 +72,12 @@ public class AuthService {
 		    	 User user = userRepo.findByEmail(req.getEmail()); 
 			        if (user != null&&user.getPassword().equals(req.getPassword())) {
 			        	 String token = jwtCheck.generateToken(user.getEmail());
-			        	session.setAttribute("token", token);
-				        return new ResponseEntity<String>(token,HttpStatus.OK);
+//			        	session.setAttribute("token", token);
+//				        return new ResponseEntity<String>(token,HttpStatus.OK);
+			        	 return ResponseEntity
+			                     .ok()
+			                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + token).body(token);
+			                    
 			        }
 			        return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
 		    }
